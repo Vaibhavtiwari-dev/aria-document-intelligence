@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlmodel
+psycopg2-binary
+boto3
+chromadb
+pymupdf
+langchain
+langchain-google-genai
+python-dotenv
+websockets
