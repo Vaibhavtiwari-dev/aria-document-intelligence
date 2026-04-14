@@ -1,4 +1,5 @@
 import os
+import logging
 import asyncio
 import fitz  # PyMuPDF
 from sqlmodel import Session
@@ -12,6 +13,8 @@ from src.services.vectorstore import get_collection
 from src.core.database import engine
 from src.api.routers.status import manager
 
+logger = logging.getLogger(__name__)
+
 # Default Gemini embedding model via Langchain Google GenAI
 embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
@@ -22,7 +25,7 @@ async def process_document(doc_id: str, workspace_id: str):
     with Session(engine) as db:
         doc = db.get(Document, doc_id)
         if not doc:
-            print(f"Document {doc_id} not found")
+            logger.warning("Document %s not found — skipping ingestion", doc_id)
             return
 
         try:
@@ -33,6 +36,7 @@ async def process_document(doc_id: str, workspace_id: str):
             
             await manager.send_status(workspace_id, {
                 "document_id": str(doc.id),
+                "filename": doc.filename,
                 "status": "processing",
                 "progress": 0,
                 "message": "Starting local file processing"
@@ -52,6 +56,7 @@ async def process_document(doc_id: str, workspace_id: str):
                     
             await manager.send_status(workspace_id, {
                 "document_id": str(doc.id),
+                "filename": doc.filename,
                 "status": "processing",
                 "progress": 25,
                 "message": "Text extracted, starting chunking"
@@ -73,6 +78,7 @@ async def process_document(doc_id: str, workspace_id: str):
 
             await manager.send_status(workspace_id, {
                 "document_id": str(doc.id),
+                "filename": doc.filename,
                 "status": "processing",
                 "progress": 50,
                 "message": "Chunking complete, starting embedding"
@@ -95,6 +101,7 @@ async def process_document(doc_id: str, workspace_id: str):
 
             await manager.send_status(workspace_id, {
                 "document_id": str(doc.id),
+                "filename": doc.filename,
                 "status": "processing",
                 "progress": 75,
                 "message": "Storing vectors in ChromaDB"
@@ -116,6 +123,7 @@ async def process_document(doc_id: str, workspace_id: str):
 
             await manager.send_status(workspace_id, {
                 "document_id": str(doc.id),
+                "filename": doc.filename,
                 "status": "completed",
                 "progress": 100,
                 "message": "Processing complete"
@@ -126,9 +134,10 @@ async def process_document(doc_id: str, workspace_id: str):
             doc.error_message = str(e)
             db.add(doc)
             db.commit()
-            print(f"Error processing document {doc.id}: {e}")
+            logger.error("Error processing document %s: %s", doc.id, e, exc_info=True)
             await manager.send_status(workspace_id, {
                 "document_id": str(doc.id),
+                "filename": doc.filename,
                 "status": "failed",
                 "progress": 0,
                 "message": f"Error: {str(e)}"
