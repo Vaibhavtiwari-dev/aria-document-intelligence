@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { SignInButton, UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
 import { ArrowRight, FileText, Zap, Shield } from "lucide-react";
 
 export default async function Home() {
-  const { userId } = await auth();
+  const userId = "mock_user_123";
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-cyan-500/30">
       <nav className="border-b border-slate-800/60 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-50">
@@ -18,21 +16,7 @@ export default async function Home() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            {!userId && (
-              <>
-                <SignInButton mode="modal">
-                  <button className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-                    Log in
-                  </button>
-                </SignInButton>
-                <SignInButton mode="modal">
-                  <button className="text-sm font-medium bg-white text-black px-4 py-2 rounded-full hover:bg-slate-200 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                    Get Started
-                  </button>
-                </SignInButton>
-              </>
-            )}
-            {userId && (
+
               <>
                 <Link
                   href="/dashboard"
@@ -40,9 +24,7 @@ export default async function Home() {
                 >
                   Go to Dashboard <ArrowRight className="w-4 h-4" />
                 </Link>
-                <UserButton />
               </>
-            )}
           </div>
         </div>
       </nav>
@@ -73,21 +55,15 @@ export default async function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-              {!userId && (
-                <SignInButton mode="modal">
-                  <button className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/25 active:scale-95">
-                    Start Exploring <ArrowRight className="w-5 h-5" />
-                  </button>
-                </SignInButton>
-              )}
-              {userId && (
+
+              <>
                 <Link
                   href="/dashboard"
                   className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/25 active:scale-95"
                 >
                   Enter Workspace <ArrowRight className="w-5 h-5" />
                 </Link>
-              )}
+              </>
             </div>
           </div>
 

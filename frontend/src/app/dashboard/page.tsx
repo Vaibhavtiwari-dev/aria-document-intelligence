@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UserButton } from "@clerk/nextjs";
+
 import { Plus, Folder, File, MessageSquare, ChevronRight, UploadCloud } from "lucide-react";
 import Link from "next/link";
 
@@ -27,7 +27,7 @@ export default function Dashboard() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <UserButton />
+            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700"></div>
           </div>
         </div>
       </nav>

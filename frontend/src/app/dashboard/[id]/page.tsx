@@ -1,95 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+
 import { ArrowLeft, Send, UploadCloud, FileText, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
+import { useWorkspaceStatus } from "@/hooks/useWorkspaceStatus";
+import { useChat } from "@/hooks/useChat";
 
 export default function WorkspacePage() {
   const pathname = usePathname();
   const workspaceId = pathname.split("/").pop(); // Simple extraction
   
-  const [messages, setMessages] = useState<{role: "user"|"ai", text: string}[]>([
-    { role: "ai", text: "Hello! I'm Aria. I can answer questions about any documents uploaded to this workspace." }
-  ]);
-  const [input, setInput] = useState("");
-  const [files, setFiles] = useState<{name: string, progress: number, status: string}[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll chat
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  // WebSocket for uploads
-  useEffect(() => {
-    if (!workspaceId) return;
-    const ws = new WebSocket(`ws://localhost:8000/status/${workspaceId}`);
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.document_id) {
-          setFiles(prev => prev.map(f => 
-            f.name === data.filename || data.document_id ? { ...f, progress: data.progress, status: data.message } : f
-          ));
-        }
-      } catch (e) {
-        console.error("WS error", e);
-      }
-    };
-    return () => ws.close();
-  }, [workspaceId]);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return;
-    const file = e.target.files[0];
-    
-    // Add to UI state
-    setFiles(prev => [...prev, { name: file.name, progress: 0, status: "Uploading..." }]);
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      await fetch(`http://localhost:8000/workspaces/${workspaceId}/documents/`, {
-        method: "POST",
-        body: formData,
-      });
-      // The progress will be updated via WebSocket
-    } catch (err) {
-      console.error(err);
-      setFiles(prev => prev.map(f => f.name === file.name ? { ...f, status: "Upload failed" } : f));
-    }
-  };
-
-  const submitChat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    
-    const userMsg = input.trim();
-    setInput("");
-    setMessages(prev => [...prev, { role: "user", text: userMsg }]);
-
-    // Optional: Stream the response
-    // For now we implement basic append
-    try {
-      const res = await fetch(`http://localhost:8000/workspaces/${workspaceId}/qa/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userMsg }),
-      });
-      
-      const text = await res.text();
-      setMessages(prev => [...prev, { role: "ai", text }]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { role: "ai", text: "Sorry, an error occurred while searching documents." }]);
-    }
-  };
+  const { files, handleUpload } = useWorkspaceStatus(workspaceId);
+  const { messages, input, setInput, submitChat, scrollRef, isStreaming } = useChat(workspaceId);
 
   // Convert "Source: filename.pdf" into badged text
   const formatText = (text: string) => {
@@ -117,7 +41,7 @@ export default function WorkspacePage() {
             </Link>
             <span className="text-sm font-semibold tracking-wide text-slate-300">Workspace / <span className="text-white">{workspaceId}</span></span>
           </div>
-          <UserButton />
+          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700"></div>
         </div>
       </nav>
 
@@ -153,10 +77,10 @@ export default function WorkspacePage() {
               />
               <button 
                 type="submit"
-                disabled={!input.trim()}
+                disabled={!input.trim() || isStreaming}
                 className="w-14 shrink-0 rounded-xl bg-white text-black flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95"
               >
-                <Send className="w-5 h-5" />
+                {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               </button>
             </form>
           </div>
@@ -186,8 +110,8 @@ export default function WorkspacePage() {
             {files.length === 0 ? (
               <div className="text-center py-8 text-sm text-slate-500">No documents indexed yet.</div>
             ) : (
-              files.map((file, i) => (
-                <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+              files.map((file) => (
+                <div key={file.documentId} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <FileText className="w-4 h-4 text-slate-400 shrink-0" />
