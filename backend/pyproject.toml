@@ -1,0 +1,23 @@
+[project]
+name = "aria-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlmodel",
+    "psycopg2-binary",
+    "boto3",
+    "chromadb",
+    "pymupdf",
+    "langchain",
+    "langchain-google-genai",
+    "python-dotenv",
+    "websockets",
+]
+
+[tool.pyright]
+pythonVersion = "3.11"
+venvPath = "."
+venv = "venv"
+extraPaths = ["src"]

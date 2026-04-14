@@ -1,6 +1,10 @@
 {
-  "python.defaultInterpreterPath": ".\\backend\\venv\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/Scripts/python.exe",
   "python.analysis.extraPaths": [
-    ".\\backend\\src"
-  ]
+    "${workspaceFolder}/backend",
+    "${workspaceFolder}/backend/src"
+  ],
+  "python.analysis.autoSearchPaths": true,
+  "python.terminal.activateEnvironment": true,
+  "python.languageServer": "Pylance"
 }
