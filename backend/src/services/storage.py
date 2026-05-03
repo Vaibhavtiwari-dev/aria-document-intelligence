@@ -9,8 +9,8 @@ load_dotenv()
 # Cloudflare R2 / AWS S3 Config
 # R2 uses S3 compatible API
 R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "local-mock")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "mock-key")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "mock-secret")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "aria-documents")
 
 # Use local storage fallback if mock

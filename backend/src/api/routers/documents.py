@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session, select
 from typing import List
 
+from src.core.config import settings
 from src.core.database import get_session
 from src.models.document import Document
 from src.models.workspace import Workspace
@@ -24,6 +25,10 @@ async def upload_document(
     ws = db.get(Workspace, workspace_id)
     if not ws or ws.owner_id != user_id:
         raise HTTPException(status_code=404, detail="Workspace not found")
+
+    # Enforce file size limit to prevent DoS
+    if file.size and file.size > settings.MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
 
     # Sanitize filename to prevent path traversal
     safe_filename = os.path.basename(file.filename)
