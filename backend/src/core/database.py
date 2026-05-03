@@ -11,6 +11,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./aria.db")
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, echo=True, connect_args=connect_args)
 
+# Enable WAL mode for SQLite to handle concurrent writes from Celery workers
+if DATABASE_URL.startswith("sqlite"):
+    from sqlalchemy import event
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
