@@ -7,14 +7,13 @@ from src.core.database import get_session
 from src.models.document import Document
 from src.models.workspace import Workspace
 from src.services.storage import upload_file
-from src.services.ingestion import process_document
+from src.services.tasks import ingest_document_task
 
 router = APIRouter(prefix="/workspaces/{workspace_id}/documents", tags=["Documents"])
 
 @router.post("/")
 async def upload_document(
     workspace_id: str, 
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...), 
     db: Session = Depends(get_session)
 ):
@@ -39,8 +38,8 @@ async def upload_document(
     db.commit()
     db.refresh(doc)
 
-    # 3. Trigger async ingestion pipeline
-    background_tasks.add_task(process_document, str(doc.id), workspace_id)
+    # 3. Trigger async ingestion pipeline via Celery
+    ingest_document_task.delay(str(doc.id), workspace_id)
 
     return {"message": "Document uploaded and ingestion started", "document": doc}
 
