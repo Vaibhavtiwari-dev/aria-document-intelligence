@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import { ArrowLeft, Send, UploadCloud, FileText, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -9,8 +9,8 @@ import { useWorkspaceStatus } from "@/hooks/useWorkspaceStatus";
 import { useChat } from "@/hooks/useChat";
 
 export default function WorkspacePage() {
-  const pathname = usePathname();
-  const workspaceId = pathname.split("/").pop(); // Simple extraction
+  const params = useParams();
+  const workspaceId = params.id as string;
   
   const { files, handleUpload } = useWorkspaceStatus(workspaceId);
   const { messages, input, setInput, submitChat, scrollRef, isStreaming } = useChat(workspaceId);

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, FileText, Zap, Shield } from "lucide-react";
 
 export default async function Home() {
-  const userId = "mock_user_123";
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-cyan-500/30">
       <nav className="border-b border-slate-800/60 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-50">

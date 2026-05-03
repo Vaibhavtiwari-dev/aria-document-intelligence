@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 export type Message = {
   role: "user" | "ai";
@@ -14,6 +15,7 @@ export type Message = {
  * until the entire response is generated.
  */
 export function useChat(workspaceId: string | undefined) {
+  const { getToken } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "ai",
@@ -51,11 +53,15 @@ export function useChat(workspaceId: string | undefined) {
       abortRef.current = new AbortController();
 
       try {
+        const token = await getToken();
         const res = await fetch(
           `${apiUrl}/workspaces/${workspaceId}/qa/`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
             body: JSON.stringify({ query: userMsg }),
             signal: abortRef.current.signal,
           }
