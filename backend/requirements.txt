@@ -9,3 +9,5 @@ langchain
 langchain-google-genai
 python-dotenv
 websockets
+celery
+redis
