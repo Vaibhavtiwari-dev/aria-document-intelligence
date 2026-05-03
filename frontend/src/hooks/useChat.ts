@@ -47,7 +47,12 @@ export function useChat(workspaceId: string | undefined) {
       setMessages((prev) => [...prev, { role: "ai", text: "" }]);
       setIsStreaming(true);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) {
+        setMessages((prev) => [...prev, { role: "ai", text: "Configuration error: API URL is missing." }]);
+        setIsStreaming(false);
+        return;
+      }
 
       // Allow in-flight cancellation
       abortRef.current = new AbortController();
@@ -68,7 +73,8 @@ export function useChat(workspaceId: string | undefined) {
         );
 
         if (!res.ok) {
-          throw new Error(`Server responded with ${res.status}`);
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.detail || `Server responded with ${res.status}`);
         }
 
         const reader = res.body?.getReader();

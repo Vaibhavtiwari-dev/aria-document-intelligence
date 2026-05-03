@@ -27,7 +27,12 @@ export function useWorkspaceStatus(workspaceId: string | undefined) {
 
     const setupWs = async () => {
       const token = await getToken();
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+      if (!wsUrl) {
+        console.error("[useWorkspaceStatus] NEXT_PUBLIC_WS_URL is missing");
+        return;
+      }
+      
       const ws = new WebSocket(`${wsUrl}/status/${workspaceId}?token=${token}`);
       wsRef.current = ws;
 
@@ -94,7 +99,18 @@ export function useWorkspaceStatus(workspaceId: string | undefined) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error("[useWorkspaceStatus] NEXT_PUBLIC_API_URL is missing");
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.documentId === tempId
+            ? { ...f, status: "Config error", progress: 0 }
+            : f
+        )
+      );
+      return;
+    }
 
     try {
       const token = await getToken();
