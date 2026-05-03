@@ -2,16 +2,17 @@ import json
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.services.vectorstore import get_collection
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
-# Core models
-embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", streaming=True)
+from src.core.config import settings
 
 async def ask_question(workspace_id: str, query: str):
     """
     RAG Pipeline for answering user questions based on their workspace documents.
     Streams the response back as SSE.
     """
+    # Initialize models within function scope to avoid global state issues
+    embeddings_model = GoogleGenerativeAIEmbeddings(model=settings.EMBEDDING_MODEL)
+    llm = ChatGoogleGenerativeAI(model=settings.LLM_MODEL, streaming=True)
+    
     collection = get_collection(workspace_id)
     
     # Embed query
@@ -38,10 +39,18 @@ async def ask_question(workspace_id: str, query: str):
         "You are Aria, an AI Document Intelligence Platform. "
         "Answer the user's question using ONLY the provided context from their documents. "
         "If the answer is not contained in the context, state that you cannot answer it based on the uploaded documents. "
-        "Always cite your sources by referencing the Source filename."
+        "Always cite your sources by referencing the Source filename exactly as provided."
     )
 
-    prompt = f"{system_prompt}\n\nContext:\n{context_string}\n\nQuestion:\n{query}"
+    prompt = (
+        f"{system_prompt}\n\n"
+        "<context>\n"
+        f"{context_string}\n"
+        "</context>\n\n"
+        "<question>\n"
+        f"{query}\n"
+        "</question>"
+    )
 
     # Stream the output
     async for chunk in llm.astream(prompt):

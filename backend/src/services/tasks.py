@@ -17,9 +17,6 @@ from src.services.vectorstore import get_collection
 
 logger = logging.getLogger(__name__)
 
-# Default Gemini embedding model via Langchain Google GenAI
-embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-
 # Initialize Redis client for status updates
 redis_client = redis.from_url(settings.REDIS_URL)
 
@@ -39,6 +36,9 @@ def ingest_document_task(self, doc_id: str, workspace_id: str):
     Ingest a document: parse -> chunk -> embed -> store
     This is a Celery task running in a worker process.
     """
+    # Initialize embedding model within task scope
+    embeddings_model = GoogleGenerativeAIEmbeddings(model=settings.EMBEDDING_MODEL)
+
     with Session(engine) as db:
         doc = db.get(Document, doc_id)
         if not doc:
