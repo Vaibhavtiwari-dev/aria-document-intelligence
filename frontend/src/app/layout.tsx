@@ -13,8 +13,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aria Platform",
-  description: "AI Document Intelligence Platform",
+  title: "Aria | AI Document Intelligence Platform",
+  description: "Upload PDFs and reports. Get instant, cited answers powered by Gemini 2.0 Flash.",
+  openGraph: {
+    title: "Aria | AI Document Intelligence Platform",
+    description: "Conversational knowledge base for your document collections.",
+    url: "https://aria-platform.vercel.app",
+    siteName: "Aria",
+    images: [
+      {
+        url: "/assets/banner.png",
+        width: 1200,
+        height: 630,
+        alt: "Aria Platform Banner",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Aria | AI Document Intelligence Platform",
+    description: "Ask questions across any document. Get cited answers instantly.",
+    images: ["/assets/banner.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
