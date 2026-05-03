@@ -20,15 +20,18 @@ def get_current_user(request: Request) -> str:
 
     try:
         # Clerk JWTs are signed with RS256
+        decode_options = {"verify_aud": True} if settings.CLERK_AUDIENCE else {"verify_aud": False}
         payload = jwt.decode(
             token, 
             settings.CLERK_PEM_PUBLIC_KEY, 
             algorithms=["RS256"],
-            options={"verify_aud": False} # Clerk doesn't always include aud in a way that matches
+            audience=settings.CLERK_AUDIENCE,
+            options=decode_options
         )
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token payload")
         return user_id
-    except JWTError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    except JWTError:
+        # Sanitize error message to prevent information disclosure
+        raise HTTPException(status_code=401, detail="Invalid or expired token")

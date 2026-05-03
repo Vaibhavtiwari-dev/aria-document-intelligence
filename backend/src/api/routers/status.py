@@ -62,11 +62,13 @@ manager = ConnectionManager()
 
 def verify_ws_token(token: str) -> str:
     if not settings.CLERK_PEM_PUBLIC_KEY:
-        return "mock_user_123" # Fallback for dev if not set
+        logger.error("CLERK_PEM_PUBLIC_KEY is not configured")
+        return None
     try:
         payload = jwt.decode(token, settings.CLERK_PEM_PUBLIC_KEY, algorithms=["RS256"], options={"verify_aud": False})
         return payload.get("sub")
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"WebSocket token verification failed: {e}")
         return None
 
 @router.websocket("/{workspace_id}")
