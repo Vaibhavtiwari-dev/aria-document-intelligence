@@ -8,6 +8,7 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./aria.db")
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
+    CLERK_PEM_PUBLIC_KEY: str = os.getenv("CLERK_PEM_PUBLIC_KEY") # For JWT verification
     
     # Ingestion Config
     CHUNK_SIZE: int = 512

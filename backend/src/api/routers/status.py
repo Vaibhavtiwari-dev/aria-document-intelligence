@@ -2,9 +2,13 @@ import asyncio
 import json
 import logging
 import redis.asyncio as redis
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException, Depends
 from typing import Dict
+from jose import jwt, JWTError
 from src.core.config import settings
+from src.core.database import engine
+from src.models.workspace import Workspace
+from sqlmodel import Session
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +60,33 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+def verify_ws_token(token: str) -> str:
+    if not settings.CLERK_PEM_PUBLIC_KEY:
+        return "mock_user_123" # Fallback for dev if not set
+    try:
+        payload = jwt.decode(token, settings.CLERK_PEM_PUBLIC_KEY, algorithms=["RS256"], options={"verify_aud": False})
+        return payload.get("sub")
+    except JWTError:
+        return None
+
 @router.websocket("/{workspace_id}")
-async def websocket_endpoint(websocket: WebSocket, workspace_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket, 
+    workspace_id: str,
+    token: str = Query(...)
+):
+    user_id = verify_ws_token(token)
+    if not user_id:
+        await websocket.close(code=1008) # Policy Violation
+        return
+
+    # Verify workspace ownership
+    with Session(engine) as db:
+        ws = db.get(Workspace, workspace_id)
+        if not ws or ws.owner_id != user_id:
+            await websocket.close(code=1008)
+            return
+
     await manager.connect(workspace_id, websocket)
     try:
         while True:

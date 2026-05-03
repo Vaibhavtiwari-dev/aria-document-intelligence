@@ -9,5 +9,6 @@ def utc_now():
 class Workspace(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     name: str = Field(index=True)
+    owner_id: str = Field(index=True) # Clerk User ID
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

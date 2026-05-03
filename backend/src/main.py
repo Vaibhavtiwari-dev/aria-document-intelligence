@@ -27,9 +27,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Aria Backend API", lifespan=lifespan)
 
 # Setup CORS
+allowed_origins = [
+    "http://localhost:3000",
+    "https://aria-platform.vercel.app", # Example production URL
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In MVP restrict later
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -11,3 +11,5 @@ python-dotenv
 websockets
 celery
 redis
+python-jose[cryptography]
+python-multipart

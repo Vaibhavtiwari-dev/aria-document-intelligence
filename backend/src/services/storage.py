@@ -1,4 +1,5 @@
 import os
+import shutil
 import boto3
 from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
@@ -28,24 +29,43 @@ def get_s3_client():
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
 
-async def upload_file(file_content: bytes, filename: str, workspace_id: str) -> str:
-    s3_key = f"{workspace_id}/{filename}"
+async def upload_file(file_obj, filename: str, workspace_id: str) -> str:
+    """
+    Uploads a file using streaming to minimize memory usage.
+    file_obj should be a file-like object (e.g., from UploadFile.file)
+    """
+    # Sanitize inputs for security
+    safe_workspace_id = os.path.basename(workspace_id)
+    safe_filename = os.path.basename(filename)
+    s3_key = f"{safe_workspace_id}/{safe_filename}"
+    
     s3 = get_s3_client()
     if s3:
-        s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=file_content)
+        # boto3's upload_fileobj handles streaming
+        s3.upload_fileobj(file_obj, BUCKET_NAME, s3_key)
     else:
-        # Mock behavior
-        workspace_dir = os.path.join(FILES_DIR, workspace_id)
+        # Mock behavior with streaming to disk
+        workspace_dir = os.path.join(FILES_DIR, safe_workspace_id)
         os.makedirs(workspace_dir, exist_ok=True)
-        with open(os.path.join(workspace_dir, filename), "wb") as f:
-            f.write(file_content)
+        file_path = os.path.join(workspace_dir, safe_filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file_obj, buffer)
+            
     return s3_key
 
 def get_file_path(s3_key: str) -> str:
     """Returns local file path if mocked, or downloads and returns temp path"""
+    # Sanitize s3_key parts to prevent path traversal even in keys
+    parts = s3_key.split("/")
+    if len(parts) != 2:
+        return None
+        
+    safe_workspace_id = os.path.basename(parts[0])
+    safe_filename = os.path.basename(parts[1])
+
     if R2_ACCOUNT_ID == "local-mock":
-        workspace_id, filename = s3_key.split("/", 1)
-        return os.path.join(FILES_DIR, workspace_id, filename)
+        return os.path.join(FILES_DIR, safe_workspace_id, safe_filename)
     else:
         # For actual S3, we would download to temp file here
         # Implementation left out for brevity, focusing on local mock MVP
