@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -9,7 +10,19 @@ from src.api.routers import workspaces, documents, qa, status
 async def lifespan(app: FastAPI):
     # Setup DB on startup
     create_db_and_tables()
+    
+    # Start Redis status listener as a background task
+    # This bridges Celery progress updates to active WebSockets
+    status_task = asyncio.create_task(status.manager.redis_listener())
+    
     yield
+    
+    # Shutdown logic
+    status_task.cancel()
+    try:
+        await status_task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(title="Aria Backend API", lifespan=lifespan)
 
