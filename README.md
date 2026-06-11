@@ -92,8 +92,8 @@ ARIA-/
 ### Backend
 
 ```bash
-git clone https://github.com/Vaibhavtiwari-dev/ARIA-.git
-cd ARIA-/backend
+git clone https://github.com/Vaibhavtiwari-dev/aria-document-intelligence.git
+cd aria-document-intelligence/backend
 
 python -m venv .venv
 # Windows
